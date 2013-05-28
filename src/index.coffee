@@ -26,7 +26,7 @@ module.exports = class JadeAngularJsCompiler
 
   compile: (data, path, callback) ->
     try
-      content = jade.compile data, 
+      content = jade.compile data,
         compileDebug: no,
         client: no,
         filename: path,
@@ -48,29 +48,13 @@ module.exports = class JadeAngularJsCompiler
 
   setupModule: (pair) ->
     @preparePair pair
-    pair.path.splice 1, 1, 'js'
-
-    modulePath = pair.path.slice 2, pair.path.lastIndexOf(@modulesFolder)+1
-
-    if modulePath.length is 0
-      modulePath.push @modulesFolder
-
-    moduleName = modulePath.join '.'
-    jsFileName = moduleName + '.js'
-    modulePath.push pair.path[pair.path.length-1]
-    copyfolder = pair.path.slice 0, 2
-    copyfolder.push jsFileName
-
-    virtualPathGen = ->
-      if modulePath.length is 2
-        return '/' + modulePath.join('/')
-      else return '/' + [modulePath[0], modulePath[2]].join('/')
-
-    result =
-      moduleName: moduleName
-      modulePath: sysPath.join.apply this, copyfolder
-      virtualPath: virtualPathGen()
-      content: pair.result
+    moduleName = @modulesFolder.replace /[\/\\]/g, '.'
+    virtualPath = '/' + pair.path[1..].join sysPath.sep
+    pair.path.splice 1, 1, 'static', 'js'
+    modulePath = sysPath.join.apply undefined, pair.path[...3]
+    modulePath = sysPath.join modulePath, (moduleName + '.js')
+    content = pair.result
+    {moduleName, modulePath, virtualPath, content}
 
   parseStringToJSArray: (str) ->
     stringArray = '['
@@ -102,7 +86,7 @@ module.exports = class JadeAngularJsCompiler
 
     return [] if pathes is undefined
 
-    pathes.map (e, i) => 
+    pathes.map (e, i) =>
         data = fs.readFileSync e.path, 'utf8'
         content = jade.compile data,
           compileDebug: no,
