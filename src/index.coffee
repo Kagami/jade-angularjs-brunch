@@ -17,6 +17,7 @@ module.exports = class JadeAngularJsCompiler
   extension: 'jade'
 
   constructor: (config) ->
+    @separator = if config.optimize then "" else "\n\n"
     @public = config.paths.public
     @pretty = !!config.plugins?.jade?.pretty
     @doctype = config.plugins?.jade?.doctype or "5"
@@ -48,34 +49,23 @@ module.exports = class JadeAngularJsCompiler
 
   setupModule: (pair) ->
     @preparePair pair
-    moduleName = @modulesFolder.replace /[\/\\]/g, '.'
-    virtualPath = '/' + pair.path[1..].join sysPath.sep
-    pair.path.splice 1, 1, 'static', 'js'
-    modulePath = sysPath.join.apply undefined, pair.path[...3]
-    modulePath = sysPath.join modulePath, (moduleName + '.js')
+    moduleName = 'partials'
+    modulePath = [@public, 'static', 'js', "#{moduleName}.js"].join sysPath.sep
+    virtualPath = "/#{moduleName}/#{pair.path[2..].join '/'}"
     content = pair.result
     {moduleName, modulePath, virtualPath, content}
 
-  parseStringToJSArray: (str) ->
-    stringArray = '['
-    str.split('\n').map (e, i) ->
-      stringArray += "\n'" + e.replace(/'/g, "\\'") + "',"
-    stringArray += "''" + '].join("\\n")'
-
   writeModules: (modules) ->
     for own moduleName, templates of modules
-      content = """
-                angular.module('#{moduleName}', [])
-                """
-      templates.map (e, i) =>
-        inlineContent = @parseStringToJSArray(e.content)
-        content +=  """
-                    \n.run(['$templateCache', function($templateCache) {
-                      return $templateCache.put('#{e.virtualPath}', #{inlineContent});
-                    }])
-                    """
-
-      content += ";"
+      content = [
+        "angular.module('#{moduleName}',[])"
+        ".run(['$templateCache',function(t){"
+        @separator
+      ]
+      templates.map (e) =>
+        content.push "t.put('#{e.virtualPath}','#{e.content}');#{@separator}"
+      content.push "}]);"
+      content = content.join ""
 
       writer = fileWriter templates[0].modulePath
       writer null, content

@@ -1,3 +1,4 @@
-#/usr/bin/bash
-rm -rf lib
+#!/usr/bin/env bash
+
+rm -rf lib/
 coffee -wo lib/ src/
