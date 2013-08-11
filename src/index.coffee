@@ -63,7 +63,8 @@ module.exports = class JadeAngularJsCompiler
         @separator
       ]
       templates.map (e) =>
-        content.push "t.put('#{e.virtualPath}','#{e.content}');#{@separator}"
+        partial = e.content.replace /'/g, "\\'"
+        content.push "t.put('#{e.virtualPath}','#{partial}');#{@separator}"
       content.push "}]);"
       content = content.join ""
 
