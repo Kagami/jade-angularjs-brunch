@@ -50,7 +50,7 @@ module.exports = class JadeAngularJsCompiler
   setupModule: (pair) ->
     @preparePair pair
     moduleName = 'partials'
-    modulePath = [@public, 'static', 'js', "#{moduleName}.js"].join sysPath.sep
+    modulePath = [@public, 'static', "#{moduleName}.js"].join sysPath.sep
     virtualPath = "/#{moduleName}/#{pair.path[2..].join '/'}"
     content = pair.result
     {moduleName, modulePath, virtualPath, content}
